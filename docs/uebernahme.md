@@ -71,10 +71,49 @@ Also eine von zwei Behebungen, nicht „Schlüssel weglassen":
 | Weg | Eingriff |
 |---|---|
 | Spalten eine DB-Vorgabe geben oder nullbar machen | Migration auf zwei Produktionstabellen |
-| **Das Paket legt nie selbst an**, sondern über einen produktgestellten Haken | keine Produktionstabelle berührt — *empfohlen* |
+| **Das Paket legt nie selbst an**, sondern über einen produktgestellten Haken | keine Produktionstabelle berührt |
 
 Für `project_manager_id` gibt es ohnehin keine sinnvolle Vorgabe: Der
 Fremdschlüssel zeigt auf `users`.
+
+**Gebaut ist der zweite Weg** (Task #8455). Jedes Produkt, in dem das Paket
+Projekte anlegen soll, meldet einen Haken an:
+
+```php
+// config/project.php
+'defaults' => \App\Project\ProjectDefaults::class,
+```
+
+```php
+// Manager
+class ProjectDefaults implements ProvidesProjectDefaults
+{
+    public function forCreate(array $attributes): array
+    {
+        return ['project_manager_id' => auth()->id()];
+    }
+}
+```
+
+```php
+// AI Brain — der Slug ist tragend, siehe oben
+class ProjectDefaults implements ProvidesProjectDefaults
+{
+    public function forCreate(array $attributes): array
+    {
+        $slug = str($attributes['name'] ?? 'projekt')->slug()->value();
+
+        return ['slug' => $slug, 'knowledge_path' => "projekte/{$slug}"];
+    }
+}
+```
+
+`'defaults' => null` heißt: Das Paket legt in diesem Produkt keine Projekte
+selbst an. Dann bricht ein Anlege-Versuch **sichtbar** an der Pflichtspalte,
+statt still etwas Halbes zu schreiben.
+
+Was der Aufrufer ausdrücklich übergibt, gewinnt gegen den Haken — sonst könnte
+das Produkt eine bewusste Angabe stillschweigend überschreiben.
 
 ## Was die Übernahme NICHT anfasst
 

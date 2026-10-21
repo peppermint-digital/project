@@ -35,6 +35,19 @@ return [
     'default_status' => 'active',
 
     /*
+    | Was nur das Produkt fuer ein neues Projekt wissen kann.
+    |
+    | Beide Uebernehmer haben eine Pflichtspalte ohne Vorgabe, die das Paket
+    | nicht fuellen kann: der Manager `project_manager_id` (NOT NULL, FK auf
+    | users), AI Brain `knowledge_path` (NOT NULL). Ohne diesen Haken muesste
+    | eine Migration zwei Produktionstabellen anfassen.
+    |
+    | `null` heisst: Das Paket legt in diesem Produkt keine Projekte selbst an.
+    */
+
+    'defaults' => null,
+
+    /*
     |--------------------------------------------------------------------------
     | Tabellen- und Spalten-Abbildung
     |--------------------------------------------------------------------------

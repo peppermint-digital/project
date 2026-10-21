@@ -3,8 +3,10 @@
 namespace Peppermint\Project;
 
 use Illuminate\Support\ServiceProvider;
+use Peppermint\Project\Contracts\ProvidesProjectDefaults;
 use Peppermint\Project\Kinds\ProjectKind;
 use Peppermint\Project\Kinds\ProjectKindRegistry;
+use Peppermint\Project\Services\ProjectCreator;
 
 class ProjectServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,26 @@ class ProjectServiceProvider extends ServiceProvider
             }
 
             return $registry;
+        });
+
+        $this->app->singleton(ProjectCreator::class, function (): ProjectCreator {
+            $defaults = config('project.defaults');
+
+            // Ueber den Container aufloesen, nicht `new`: Ersetzt ein
+            // Produkttest den Haken per Binding, macht ein direktes `new` die
+            // Ersetzung wirkungslos — und der Test bleibt gruen, ohne noch
+            // etwas zu pruefen. Dieselbe Falle wie bei den Arten.
+            $instance = $defaults === null ? null : $this->app->make($defaults);
+
+            if ($instance !== null && ! $instance instanceof ProvidesProjectDefaults) {
+                throw new \InvalidArgumentException(sprintf(
+                    'config/project.php: "defaults" muss %s umsetzen, ist aber %s.',
+                    ProvidesProjectDefaults::class,
+                    get_debug_type($instance),
+                ));
+            }
+
+            return new ProjectCreator($instance);
         });
     }
 
