@@ -67,6 +67,15 @@ it('hat keine Methode, die wie ein Paketfeld heisst', function () {
     }
 });
 
-it('liest ein fehlendes Feld als null, ohne zu rekursieren', function () {
-    expect((new Project)->field('kind'))->toBeNull();
+it('liest JEDES Paketfeld am leeren Objekt, ohne zu rekursieren', function () {
+    // Memory #4444 sagt ausdruecklich, dass der Namenstest allein nicht reicht:
+    // Er prueft nur, was man schon weiss. Dieser hier faehrt jedes Feld einmal
+    // ueber field() am leeren Objekt — eine Rekursion faellt als erschoepfter
+    // Speicher auf, nicht als falscher Wert. Das leere Objekt ist der scharfe
+    // Fall: Steht ein Wert in den Attributen, greift die Falle nie.
+    $projekt = new Project;
+
+    foreach (['name', 'description', 'status', 'kind'] as $feld) {
+        expect($projekt->field($feld))->toBeNull();
+    }
 });
