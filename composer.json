@@ -1,0 +1,51 @@
+{
+    "name": "peppermint/project",
+    "description": "Project core for Laravel — a project identity other systems hang their own meaning on, with application-defined kinds and status vocabularies, and column mapping for products whose tables are older than this package.",
+    "type": "library",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Peppermint Digital"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0",
+        "laravel/pint": "^1.18"
+    },
+    "suggest": {
+        "laravel/mcp": "For the package's base MCP tools. Optional — the package works without it.",
+        "peppermint/tasks": "For the task bridge: tasks belonging to a project. Optional — the package works without it.",
+        "peppermint/calendar": "For the calendar bridge: appointments belonging to a project. Optional — the package works without it.",
+        "peppermint/time": "For the time bridge: time booked against a project. Optional — the package works without it."
+    },
+    "autoload": {
+        "psr-4": {
+            "Peppermint\\Project\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Peppermint\\Project\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Peppermint\\Project\\ProjectServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
