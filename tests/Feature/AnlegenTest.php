@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Peppermint\Project\Contracts\ProvidesProjectDefaults;
 use Peppermint\Project\Exceptions\ProjectNotCreatable;
+use Peppermint\Project\Models\Project;
 use Peppermint\Project\Services\ProjectCreator;
 
 /** Füllt, was nur der Manager weiss. */
@@ -153,4 +154,74 @@ it('benutzt die Spaltenabbildung auch beim Anlegen', function () {
     // Das Feld heisst kind, die Spalte category — und genau das muss passieren.
     expect(DB::table('projects')->value('category'))->toBe('druck')
         ->and(Schema::hasColumn('projects', 'kind'))->toBeFalse();
+});
+
+/**
+ * Das Paket darf nie seine EIGENE Modellklasse anlegen, wenn das Produkt erbt.
+ *
+ * Gefunden am 21.10.2026 durch den Produkttest im Manager: `ProjectCreator`
+ * erzeugte `Peppermint\Project\Models\Project` und umging damit das
+ * Produktmodell — samt Casts, Spalten-Vorgaben, Beobachtern und
+ * Feldbereinigung. Im Manager haengt daran die HTML-Positivliste fuer
+ * `description` (Bug #814): Das Paket haette unbereinigtes HTML geschrieben.
+ *
+ * Kein Pakettest konnte das sehen, weil das Paket allein gar kein erbendes
+ * Modell hat. Genau dafuer gibt es die Produkttests.
+ */
+class ErbendesProjekt extends Project
+{
+    protected $table = 'projects';
+
+    protected $attributes = ['status' => 'geerbt'];
+
+    public static array $angelegt = [];
+
+    protected static function booted(): void
+    {
+        static::created(function ($modell): void {
+            static::$angelegt[] = $modell->name;
+        });
+    }
+}
+
+it('legt die Modellklasse des Produkts an, nicht die eigene', function () {
+    Schema::create('projects', function ($t): void {
+        $t->id();
+        $t->string('name');
+        $t->string('status')->default('paket');
+        $t->timestamps();
+    });
+
+    config()->set('project.model', ErbendesProjekt::class);
+    ErbendesProjekt::$angelegt = [];
+
+    $projekt = app(ProjectCreator::class)->create(['name' => 'Durch das Produkt']);
+
+    expect($projekt)->toBeInstanceOf(ErbendesProjekt::class)
+        // Die Vorgabe des Produktmodells muss gegriffen haben, nicht die der Spalte.
+        ->and($projekt->status)->toBe('geerbt')
+        // Und der Beobachter des Produkts muss gelaufen sein.
+        ->and(ErbendesProjekt::$angelegt)->toBe(['Durch das Produkt']);
+});
+
+it('nimmt die eigene Klasse, wenn kein Produktmodell eingetragen ist', function () {
+    Schema::create('projects', function ($t): void {
+        $t->id();
+        $t->string('name');
+        $t->string('status')->default('paket');
+        $t->timestamps();
+    });
+
+    // Gegenprobe nach unten: Ohne Eintrag darf nicht zufaellig eine fremde
+    // Klasse herauskommen — sonst waere die Probe oben nicht aussagekraeftig.
+    expect(app(ProjectCreator::class)->create(['name' => 'Ohne Produktmodell']))
+        ->toBeInstanceOf(Project::class)
+        ->not->toBeInstanceOf(ErbendesProjekt::class);
+});
+
+it('weist eine Modellklasse ab, die nicht vom Paketmodell erbt', function () {
+    config()->set('project.model', stdClass::class);
+
+    expect(fn () => Project::resolveClass())
+        ->toThrow(InvalidArgumentException::class, 'muss von');
 });

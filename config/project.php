@@ -1,5 +1,7 @@
 <?php
 
+use Peppermint\Project\Models\Project;
+
 return [
 
     /*
@@ -46,6 +48,20 @@ return [
     */
 
     'defaults' => null,
+
+    /*
+    | Die Modellklasse, die das Paket benutzt, wenn es ein Projekt anlegt.
+    |
+    | Vorgabe ist die eigene. Ein Produkt, das erbt, traegt hier SEINE Klasse
+    | ein — sonst umgeht Paketcode das Produktmodell samt Casts, Spalten-
+    | Vorgaben, Beobachtern und Feldbereinigung. Im Manager haengt daran die
+    | HTML-Positivliste fuer `description` (Bug #814): Ein Paket, das die
+    | Paketklasse benutzt, schreibt unbereinigtes HTML in die Datenbank.
+    |
+    | Namensgleich zu `calendar.user_model` im Kalenderpaket.
+    */
+
+    'model' => Project::class,
 
     /*
     |--------------------------------------------------------------------------

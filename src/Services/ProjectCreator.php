@@ -53,7 +53,12 @@ class ProjectCreator
             throw ProjectNotCreatable::withoutName();
         }
 
-        return Project::create($attributes);
+        // Die Klasse des PRODUKTS, nicht die des Pakets — sonst fallen Casts,
+        // Spalten-Vorgaben, Beobachter und Feldbereinigung des Produkts weg.
+        // Im Manager haengt daran die HTML-Positivliste (Bug #814).
+        $klasse = Project::resolveClass();
+
+        return $klasse::create($attributes);
     }
 
     /**

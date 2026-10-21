@@ -70,6 +70,30 @@ class Project extends Model
         return $this;
     }
 
+    /**
+     * Die Modellklasse des Produkts — oder diese hier, wenn keine eingetragen ist.
+     *
+     * Paketcode darf NIE `new static` oder `self::create()` benutzen, um ein
+     * Projekt anzulegen: Das umgeht das Produktmodell und mit ihm dessen Casts,
+     * Spalten-Vorgaben, Beobachter und Feldbereinigung.
+     *
+     * @return class-string<self>
+     */
+    public static function resolveClass(): string
+    {
+        $klasse = config('project.model', static::class);
+
+        if (! is_a($klasse, self::class, true)) {
+            throw new \InvalidArgumentException(sprintf(
+                'config/project.php: "model" muss von %s erben, ist aber %s.',
+                self::class,
+                is_string($klasse) ? $klasse : get_debug_type($klasse),
+            ));
+        }
+
+        return $klasse;
+    }
+
     public static function kinds(): ProjectKindRegistry
     {
         return app(ProjectKindRegistry::class);
