@@ -22,7 +22,8 @@
         "laravel/mcp": "For the package's base MCP tools. Optional — the package works without it.",
         "peppermint/tasks": "For the task bridge: tasks belonging to a project. Optional — the package works without it.",
         "peppermint/calendar": "For the calendar bridge: appointments belonging to a project. Optional — the package works without it.",
-        "peppermint/time": "For the time bridge: time booked against a project. Optional — the package works without it."
+        "peppermint/time": "For the time bridge: time booked against a project. Optional — the package works without it.",
+        "phpunit/phpunit": "For Peppermint\\Project\\Testing\\AssertsProjectAdoption, the shared adoption assertions. Optional — only needed when a product uses them in its own tests."
     },
     "autoload": {
         "psr-4": {
