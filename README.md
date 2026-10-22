@@ -2,8 +2,9 @@
 
 Eine Projekt-Identität, an die andere Systeme ihre eigene Bedeutung hängen.
 
-Stand: Gerüst. Noch in kein Produkt eingebunden. Der Schnitt ist vorgeschlagen,
-nicht entschieden — siehe „Offen" unten.
+Stand: **im Peppermint Manager eingebunden** (seit 22.10.2026, dort Commit
+`8f829d69`, Changelog v1.217.0). Der Schnitt ist entschieden — siehe „Offen"
+unten für das, was noch aussteht.
 
 ## Was hier hineingehört
 
@@ -50,8 +51,11 @@ Core-Pakete dürfen sich nicht kennen" in beide Richtungen grün.
    dort: `ai_brain_project_id`, `verwaltung_order_id`.)
 2. Ist die Art eine eigene Spalte oder eine vorhandene Kategorie-Spalte?
    **Beides geht ohne Codeänderung** — `project.columns.projects.kind` bildet ab.
-3. Wird `slug` Kernspalte? AI Brain hat ihn unique NOT NULL und tragend (der
-   Vault-Ordner heißt so), der Manager hat **keinen**. Kernspalte hieße Backfill.
+3. ~~Wird `slug` Kernspalte?~~ **Entschieden am 22.10.2026: nein, `slug` bleibt
+   Brain-eigenes.** AI Brain hat ihn unique NOT NULL und tragend (der Vault-Ordner
+   heißt so), der Manager hat **keinen** — 0 Treffer in allen Projekt-Migrationen.
+   Ein Feld, das nur ein Produkt braucht, gehört nicht in die geteilte Mitte, und
+   es entfällt damit ein Backfill über den Manager-Bestand.
 4. Fließt `name` automatisch Manager → Brain? Der **Status nicht** — zwei Status
    mit zwei Bedeutungen sind keine Dublette, sondern zwei Fragen.
 
