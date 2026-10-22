@@ -2,6 +2,7 @@
 
 namespace Peppermint\Project\Services;
 
+use Peppermint\Project\Contracts\HandlesProjectCreated;
 use Peppermint\Project\Contracts\ProvidesProjectDefaults;
 use Peppermint\Project\Exceptions\ProjectNotCreatable;
 use Peppermint\Project\Models\Project;
@@ -58,7 +59,17 @@ class ProjectCreator
         // Im Manager haengt daran die HTML-Positivliste (Bug #814).
         $klasse = Project::resolveClass();
 
-        return $klasse::create($attributes);
+        $projekt = $klasse::create($attributes);
+
+        // Nebenwirkungen, die nur das Produkt kennt — und nur, wenn DAS PAKET
+        // angelegt hat. Ein Haken am Produktmodell waere breiter: Er griffe bei
+        // jedem Project::create(), auch in einem Testaufbau, der absichtlich ein
+        // fremdes Projekt erzeugt.
+        if ($this->defaults instanceof HandlesProjectCreated) {
+            $this->defaults->projectCreated($projekt);
+        }
+
+        return $projekt;
     }
 
     /**

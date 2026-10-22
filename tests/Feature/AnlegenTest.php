@@ -3,6 +3,7 @@
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Peppermint\Project\Contracts\HandlesProjectCreated;
 use Peppermint\Project\Contracts\ProvidesProjectDefaults;
 use Peppermint\Project\Exceptions\ProjectNotCreatable;
 use Peppermint\Project\Models\Project;
@@ -224,4 +225,69 @@ it('weist eine Modellklasse ab, die nicht vom Paketmodell erbt', function () {
 
     expect(fn () => Project::resolveClass())
         ->toThrow(InvalidArgumentException::class, 'muss von');
+});
+
+/**
+ * Der freiwillige Nach-Anlage-Haken.
+ *
+ * Er laeuft NUR, wenn das Paket anlegt. Ein Haken am Produktmodell waere
+ * breiter: Er griffe bei jedem `Project::create()`. Am 22.10.2026 hat genau
+ * das einen fremden Test im AI Brain umgeworfen, der absichtlich ein fremdes
+ * Projekt erzeugt, waehrend jemand angemeldet ist.
+ */
+class HakenMitNachwirkung implements HandlesProjectCreated, ProvidesProjectDefaults
+{
+    public static array $gerufen = [];
+
+    public function forCreate(array $attributes): array
+    {
+        return [];
+    }
+
+    public function projectCreated(Project $project): void
+    {
+        self::$gerufen[] = $project->name;
+    }
+}
+
+/** Setzt NUR den Attribut-Vertrag um — wie der Manager. */
+class NurAttribute implements ProvidesProjectDefaults
+{
+    public function forCreate(array $attributes): array
+    {
+        return [];
+    }
+}
+
+it('ruft den Nach-Anlage-Haken, wenn das Produkt ihn umsetzt', function () {
+    Schema::create('projects', function ($t): void {
+        $t->id();
+        $t->string('name');
+        $t->timestamps();
+    });
+
+    config()->set('project.defaults', HakenMitNachwirkung::class);
+    HakenMitNachwirkung::$gerufen = [];
+
+    $projekt = app(ProjectCreator::class)->create(['name' => 'Mit Nachwirkung']);
+
+    // Mit dem angelegten Projekt, nicht mit irgendeinem: Sonst koennte der
+    // Haken am falschen Datensatz arbeiten, ohne dass es auffaellt.
+    expect(HakenMitNachwirkung::$gerufen)->toBe(['Mit Nachwirkung'])
+        ->and($projekt->name)->toBe('Mit Nachwirkung');
+});
+
+it('kommt ohne den Nach-Anlage-Haken aus', function () {
+    Schema::create('projects', function ($t): void {
+        $t->id();
+        $t->string('name');
+        $t->timestamps();
+    });
+
+    // Gegenprobe: Der Vertrag ist FREIWILLIG. Ein Produkt, das nur Attribute
+    // liefert, darf nicht daran scheitern.
+    config()->set('project.defaults', NurAttribute::class);
+
+    expect(app(ProjectCreator::class)->create(['name' => 'Ohne Nachwirkung'])->exists)
+        ->toBeTrue();
 });
